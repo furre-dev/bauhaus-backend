@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
-  const storeRole = await userIsManager(accessToken)
+  const storeRole = await userIsManager(accessToken);
   if (!storeRole || !storeRole.isManager) {
     return res.status(401).json({
       error: "Unauthorized",

@@ -1,17 +1,18 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, QueryData } from "@supabase/supabase-js";
 import { Employee } from "./types/employee";
 import dotenv from 'dotenv';
 import { Database } from "../database.types";
 
 dotenv.config({ path: '.env.local' });
 
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
+const supabase = createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 
 export async function userIsManager(accessToken: string) {
   const { data, error } = await supabase.auth.getUser(accessToken);
   if (error || !data) {
     return null
   }
+
   const userStoreRole = await getUserStoreRole(data.user.id);
   const storeId = await getUserStore(data.user.id)
 
@@ -19,11 +20,12 @@ export async function userIsManager(accessToken: string) {
     isManager: userStoreRole === "manager" ? true : false,
     store: storeId
   }
+
   return managerObject
 }
 
 type UserStoreRole = {
-  store_role: Database["public"]["Enums"]["store_role"]
+  store_role: Database["public"]["Tables"]["employees"]["Row"]["store_role"]
 }
 
 export async function getUserStoreRole(UUID: string) {
@@ -31,7 +33,8 @@ export async function getUserStoreRole(UUID: string) {
     .from('employees')
     .select('store_role')
     .eq('id', UUID)
-    .returns<UserStoreRole | null>();
+    .single();
+
   if (error || !data) return null
 
   return data.store_role
@@ -46,7 +49,7 @@ export async function getUserStore(UUID: string) {
     .from('employees')
     .select('store')
     .eq('id', UUID)
-    .returns<UserStore | null>();
+    .single();
 
   if (error || !data) return null
 
